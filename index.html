@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fotosentez Etkileşimli Biyoloji Modeli</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulseGlow {
+            0%, 100% { filter: drop-shadow(0 0 15px rgba(234, 179, 8, 0.8)); }
+            50% { filter: drop-shadow(0 0 30px rgba(234, 179, 8, 1)); }
+        }
+        .sun-pulse {
+            animation: pulseGlow 3s infinite ease-in-out;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+
+        canvas {
+            background: radial-gradient(circle at center, #064e3b 0%, #022c22 100%);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between custom-scrollbar">
+
+    <!-- Üst Başlık (Header) -->
+    <header class="bg-slate-900/90 backdrop-blur border-b border-emerald-800/50 p-4 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 px-4">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-emerald-500/20 rounded-lg border border-emerald-500/40">
+                    <svg class="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold bg-gradient-to-r from-emerald-400 to-green-200 bg-clip-text text-transparent">Fotosentez İnteraktif Biyoloji Modeli</h1>
+                    <p class="text-xs text-emerald-400/70">Kloroplast İçindeki Moleküler Biyokimya ve Enerji Dönüşümü</p>
+                </div>
+            </div>
+
+            <!-- Kontrol Butonları -->
+            <div class="flex items-center gap-2 bg-slate-800/80 p-1.5 rounded-xl border border-slate-700">
+                <button id="btnAll" onclick="setMode('all')" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all bg-emerald-600 text-white shadow-lg">Tümü</button>
+                <button id="btnLight" onclick="setMode('light')" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white">Işığa Bağımlı</button>
+                <button id="btnDark" onclick="setMode('dark')" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white">Calvin Döngüsü</button>
+                <div class="h-4 w-px bg-slate-700 my-auto mx-1"></div>
+                <button id="btnPlayPause" onclick="togglePlay()" class="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30">
+                    <svg id="iconPause" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    <svg id="iconPlay" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Ana İçerik Alanı -->
+    <main class="max-w-7xl w-full mx-auto p-4 space-y-6 my-4">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Sol Panel: Kapsamlı Bilgi ve Anlatım -->
+            <section class="lg:col-span-5 flex flex-col gap-4">
+                <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex-1 flex flex-col max-h-[500px] custom-scrollbar overflow-y-auto">
+                    
+                    <div class="border-b border-slate-800 pb-3 mb-4 flex justify-between items-center">
+                        <h2 id="infoTitle" class="text-lg font-bold text-emerald-400 flex items-center gap-2">
+                            <span>🌱</span> Fotosentez Mekanizması
+                        </h2>
+                        <span id="badgeStage" class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-900/60 text-emerald-300 border border-emerald-700">Genel Bakış</span>
+                    </div>
+
+                    <!-- Anlatım Metni -->
+                    <div id="infoContent" class="space-y-4 text-sm text-slate-300 leading-relaxed">
+                        <p class="font-medium text-emerald-200/90">
+                            Fotosentez, klorofilli canlıların ışık enerjisini kullanarak inorganik maddelerden (CO₂ ve H₂O) organik besin (glikoz) ve oksijen (O₂) ürettiği biyokimyasal bir süreçtir.
+                        </p>
+                        
+                        <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800/80 font-mono text-xs text-emerald-400 text-center">
+                            6CO₂ + 6H₂O + Işık Enerjisi ➔ C₆H₁₂O₆ + 6O₂
+                        </div>
+
+                        <div class="space-y-3">
+                            <h3 class="font-semibold text-slate-100 flex items-center gap-1.5 text-base">
+                                <span class="w-2 h-2 rounded-full bg-yellow-400"></span> 1. Işığa Bağımlı Evre
+                            </h3>
+                            <p class="text-xs text-slate-400">
+                                Kloroplastın <strong>tilakoit zarlarında</strong> gerçekleşir. Işık enerjisi klorofil tarafından emilir.
+                            </p>
+                            <ul class="list-disc list-inside text-xs space-y-1 text-slate-400 pl-1">
+                                <li><strong class="text-slate-200">Fotoliz (Suyun Parçalanması):</strong> Işık yardımıyla H₂O parçalanır; ortama O₂ salınır, H⁺ ve elektronlar serbest kalır.</li>
+                                <li><strong class="text-slate-200">ETS ve ATP Sentezi:</strong> Yüksek enerjili elektronlar ETS boyunca taşınır. Kemiozmotik hipoteze göre proton gradyanı kullanılarak ATP sentaz enzimi ile ATP üretilir.</li>
+                                <li><strong class="text-slate-200">NADPH Oluşumu:</strong> NADP⁺ molekülü elektron ve proton alarak NADPH'ye indirgenir.</li>
+                            </ul>
+                        </div>
+
+                        <div class="space-y-3 pt-2">
+                            <h3 class="font-semibold text-slate-100 flex items-center gap-1.5 text-base">
+                                <span class="w-2 h-2 rounded-full bg-cyan-400"></span> 2. Işıktan Bağımsız Evre (Calvin Döngüsü)
+                            </h3>
+                            <p class="text-xs text-slate-400">
+                                Kloroplastın <strong>stroma</strong> sıvısında gerçekleşir. Doğrudan ışığa ihtiyaç duyulmaz ancak ışığa bağımlı evreden gelen ürünler kullanılır.
+                            </p>
+                            <ul class="list-disc list-inside text-xs space-y-1 text-slate-400 pl-1">
+                                <li><strong class="text-slate-200">Karbon Bağlanması:</strong> Atmosferden alınan CO₂, RuBisCO enzimi ile 5-karbonlu RuBP molekülüne bağlanır.</li>
+                                <li><strong class="text-slate-200">Besin Üretimi:</strong> Işığa bağımlı evrede üretilen <strong>ATP</strong> ve <strong>NADPH</strong> harcanarak PGAL (Fosfofosfogliseraldehit) sentezlenir.</li>
+                                <li><strong class="text-slate-200">Çıktı:</strong> PGAL moleküllerinden glikoz, amino asit ve diğer organik moleküller üretilir.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Sağ Panel: Animasyonlu Simülasyon Tuvali (Canvas) -->
+            <section class="lg:col-span-7 flex flex-col justify-center items-center">
+                <div class="relative w-full aspect-[4/3] bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+                    <canvas id="simCanvas" class="w-full h-full block"></canvas>
+                    
+                    <!-- Tuval Üzeri Bilgi Kartı -->
+                    <div class="absolute bottom-3 left-3 right-3 bg-slate-950/80 backdrop-blur border border-slate-800 p-2.5 rounded-xl flex items-center justify-between text-xs">
+                        <div class="flex items-center space-x-3">
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-yellow-400 inline-block"></span> Işık/Güneş</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block"></span> H₂O / O₂</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-slate-300 inline-block"></span> CO₂</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span> Glikoz</span>
+                        </div>
+                        <span class="text-slate-500 hidden sm:inline">Etkileşimli Simülasyon</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Akademik Ders Notları Kartı -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl">
+            <h3 class="text-base font-bold text-emerald-400 mb-3 flex items-center gap-2">
+                <span>🎓</span> Akademik Biyoloji Ders Notları ve Terimler Sözlüğü
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80">
+                    <span class="text-emerald-400 font-bold block text-sm mb-1">🌿 Kloroplast Anatomisi</span>
+                    <p class="text-slate-400 leading-relaxed">
+                        <strong>Çift Zar:</strong> Dış ve iç zar ile çevrilidir.<br>
+                        <strong>Tilakoit Zar Sistemi:</strong> Yassılaşmış zar diskleridir. Üst üste dizilerek <strong>Granum</strong> yapılarını oluşturur. Klorofil pigmentleri ve ETS burada yer alır.<br>
+                        <strong>Stroma:</strong> Kloroplastın içini dolduran yoğun sıvıdır. DNA, RNA, ribozom ve Calvin döngüsü enzimleri (RuBisCO) burada bulunur.
+                    </p>
+                </div>
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80">
+                    <span class="text-yellow-400 font-bold block text-sm mb-1">⚡ Fotofosforilasyon Çeşitleri</span>
+                    <p class="text-slate-400 leading-relaxed">
+                        <strong>Devirli Olmayan Fotofosforilasyon:</strong> PS II ve PS I ortak çalışır. Su parçalanır (Fotoliz). ATP, NADPH ve O₂ üretilir.<br>
+                        <strong>NADP⁺ İndirgenmesi:</strong> ETS'den gelen e⁻ ve tilakoit boşluktaki H⁺ protonları NADP⁺ redüktaz enzimi ile birleşerek NADPH oluşturur.
+                    </p>
+                </div>
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80">
+                    <span class="text-cyan-400 font-bold block text-sm mb-1">🧪 PGAL ve Organik Molekül Dönüşümü</span>
+                    <p class="text-slate-400 leading-relaxed">
+                        Calvin döngüsünde üretilen 3-Karbonlu <strong>PGAL</strong> (Fosfofosfogliseraldehit) temel ara bileşiktir:<br>
+                        • 2 PGAL ➔ <strong>Glikoz ve Nişasta / Selüloz</strong><br>
+                        • Azot katılımı ile ➔ <strong>Amino asit ve Organik Baz</strong><br>
+                        • Dönüşüm ile ➔ <strong>Gliserol ve Yağ Asitleri</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 10 SORULUK DEĞERLENDİRME TESTİ MODÜLÜ -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <div class="flex items-center justify-between mb-6 border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-emerald-400 flex items-center gap-2">
+                    <span>📝</span> Fotosentez Konu Değerlendirme Testi (10 Soru)
+                </h3>
+                <span class="text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 px-3 py-1 rounded-full font-medium">Anında Geri Bildirimli</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- Soru 1 -->
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs flex flex-col justify-between space-y-3">
+                    <div>
+                        <p class="font-bold text-slate-100 text-sm mb-3">1. Fotosentezin ışığa bağımlı evre reaksiyonları kloroplastın hangi kısmında gerçekleşir?</p>
+                        <div class="space-y-2">
+                            <button onclick="checkAnswer(1, 0, false)" class="q1-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">A) Stroma</button>
+                            <button onclick="checkAnswer(1, 1, true)" class="q1-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">B) Tilakoit Zar</button>
+                            <button onclick="checkAnswer(1, 2, false)" class="q1-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">C) Dış Zar</button>
+                            <button onclick="checkAnswer(1, 3, false)" class="q1-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">D) Ribozom</button>
+                        </div>
+                    </div>
+                    <div id="desc-1" class="hidden p-2.5 rounded bg-slate-900 border border-slate-800 text-xs text-slate-300">
+                        💡 <strong>Açıklama:</strong> Işığa bağımlı reaksiyonlar klorofil ve ETS'nin bulunduğu Tilakoit zarlarda gerçekleşir.
+                    </div>
+                </div>
+
+                <!-- Soru 2 -->
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs flex flex-col justify-between space-y-3">
+                    <div>
+                        <p class="font-bold text-slate-100 text-sm mb-3">2. Fotosentez sırasında atmosfere salınan oksijenin (O₂) kaynağı hangisidir?</p>
+                        <div class="space-y-2">
+                            <button onclick="checkAnswer(2, 0, false)" class="q2-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">A) Karbondioksit (CO₂)</button>
+                            <button onclick="checkAnswer(2, 1, false)" class="q2-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">B) Glikoz</button>
+                            <button onclick="checkAnswer(2, 2, true)" class="q2-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">C) Su (H₂O)</button>
+                            <button onclick="checkAnswer(2, 3, false)" class="q2-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">D) ATP</button>
+                        </div>
+                    </div>
+                    <div id="desc-2" class="hidden p-2.5 rounded bg-slate-900 border border-slate-800 text-xs text-slate-300">
+                        💡 <strong>Açıklama:</strong> Fotoliz olayı ile su (H₂O) parçalanır ve açığa çıkan oksijen atmosfere verilir.
+                    </div>
+                </div>
+
+                <!-- Soru 3 -->
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs flex flex-col justify-between space-y-3">
+                    <div>
+                        <p class="font-bold text-slate-100 text-sm mb-3">3. Calvin döngüsünde (ışıktan bağımsız evre) karbon tutulmasını sağlayan temel enzim hangisidir?</p>
+                        <div class="space-y-2">
+                            <button onclick="checkAnswer(3, 0, false)" class="q3-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">A) ATP Sentaz</button>
+                            <button onclick="checkAnswer(3, 1, true)" class="q3-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">B) RuBisCO</button>
+                            <button onclick="checkAnswer(3, 2, false)" class="q3-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">C) DNA Polimeraz</button>
+                            <button onclick="checkAnswer(3, 3, false)" class="q3-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">D) Amilaz</button>
+                        </div>
+                    </div>
+                    <div id="desc-3" class="hidden p-2.5 rounded bg-slate-900 border border-slate-800 text-xs text-slate-300">
+                        💡 <strong>Açıklama:</strong> RuBisCO, CO₂ molekülünü 5-karbonlu RuBP bileşiğine bağlayan temel enzimdir.
+                    </div>
+                </div>
+
+                <!-- Soru 4 -->
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs flex flex-col justify-between space-y-3">
+                    <div>
+                        <p class="font-bold text-slate-100 text-sm mb-3">4. Işığa bağımlı evrede üretilip Calvin döngüsüne aktarılan moleküller hangileridir?</p>
+                        <div class="space-y-2">
+                            <button onclick="checkAnswer(4, 0, false)" class="q4-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">A) O₂ ve Glikoz</button>
+                            <button onclick="checkAnswer(4, 1, true)" class="q4-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">B) ATP ve NADPH</button>
+                            <button onclick="checkAnswer(4, 2, false)" class="q4-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">C) CO₂ ve H₂O</button>
+                            <button onclick="checkAnswer(4, 3, false)" class="q4-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">D) NADP⁺ ve ADP</button>
+                        </div>
+                    </div>
+                    <div id="desc-4" class="hidden p-2.5 rounded bg-slate-900 border border-slate-800 text-xs text-slate-300">
+                        💡 <strong>Açıklama:</strong> Işık evresinde üretilen ATP ve NADPH, ışıktan bağımsız evrede besin sentezi için harcanır.
+                    </div>
+                </div>
+
+                <!-- Soru 5 -->
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs flex flex-col justify-between space-y-3">
+                    <div>
+                        <p class="font-bold text-slate-100 text-sm mb-3">5. Fotosentezin ışıktan bağımsız reaksiyonları (Calvin Döngüsü) kloroplastın neresinde gerçekleşir?</p>
+                        <div class="space-y-2">
+                            <button onclick="checkAnswer(5, 0, true)" class="q5-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">A) Stroma</button>
+                            <button onclick="checkAnswer(5, 1, false)" class="q5-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">B) Granum</button>
+                            <button onclick="checkAnswer(5, 2, false)" class="q5-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">C) Tilakoit Boşluk</button>
+                            <button onclick="checkAnswer(5, 3, false)" class="q5-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">D) Çekirdek</button>
+                        </div>
+                    </div>
+                    <div id="desc-5" class="hidden p-2.5 rounded bg-slate-900 border border-slate-800 text-xs text-slate-300">
+                        💡 <strong>Açıklama:</strong> Calvin döngüsü kloroplastın içini dolduran sıvı kısım olan Stroma'da gerçekleşir.
+                    </div>
+                </div>
+
+                <!-- Soru 6 -->
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs flex flex-col justify-between space-y-3">
+                    <div>
+                        <p class="font-bold text-slate-100 text-sm mb-3">6. Suyun ışık ve enzimler yardımıyla H⁺, elektron ve O₂'ye ayrışması olayına ne ad verilir?</p>
+                        <div class="space-y-2">
+                            <button onclick="checkAnswer(6, 0, false)" class="q6-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">A) Glikoliz</button>
+                            <button onclick="checkAnswer(6, 1, true)" class="q6-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">B) Fotoliz</button>
+                            <button onclick="checkAnswer(6, 2, false)" class="q6-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">C) Karboksilasyon</button>
+                            <button onclick="checkAnswer(6, 3, false)" class="q6-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">D) Fosforilasyon</button>
+                        </div>
+                    </div>
+                    <div id="desc-6" class="hidden p-2.5 rounded bg-slate-900 border border-slate-800 text-xs text-slate-300">
+                        💡 <strong>Açıklama:</strong> Suyun ışık enerjisiyle parçalanması olayına 'Fotoliz' adı verilir.
+                    </div>
+                </div>
+
+                <!-- Soru 7 -->
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs flex flex-col justify-between space-y-3">
+                    <div>
+                        <p class="font-bold text-slate-100 text-sm mb-3">7. Calvin döngüsünde üretilen ve tüm organik moleküllerin sentezinde kullanılan 3-karbonlu temel bileşik hangisidir?</p>
+                        <div class="space-y-2">
+                            <button onclick="checkAnswer(7, 0, false)" class="q7-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">A) RuBP</button>
+                            <button onclick="checkAnswer(7, 1, true)" class="q7-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">B) PGAL</button>
+                            <button onclick="checkAnswer(7, 2, false)" class="q7-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">C) Pirüvat</button>
+                            <button onclick="checkAnswer(7, 3, false)" class="q7-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">D) Asetil-CoA</button>
+                        </div>
+                    </div>
+                    <div id="desc-7" class="hidden p-2.5 rounded bg-slate-900 border border-slate-800 text-xs text-slate-300">
+                        💡 <strong>Açıklama:</strong> PGAL (Fosfofosfogliseraldehit) bitkinin ihtiyaç duyduğu tüm organik moleküllerin öncül maddesidir.
+                    </div>
+                </div>
+
+                <!-- Soru 8 -->
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs flex flex-col justify-between space-y-3">
+                    <div>
+                        <p class="font-bold text-slate-100 text-sm mb-3">8. Işığa bağımlı evrede H+ derişim farkından faydalanarak ATP sentezlenmesini açıklayan hipotez hangisidir?</p>
+                        <div class="space-y-2">
+                            <button onclick="checkAnswer(8, 0, true)" class="q8-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">A) Kemiozmotik Hipotez</button>
+                            <button onclick="checkAnswer(8, 1, false)" class="q8-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">B) Kilit-Anahtar Hipotezi</button>
+                            <button onclick="checkAnswer(8, 2, false)" class="q8-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">C) Aksiyom Hipotezi</button>
+                            <button onclick="checkAnswer(8, 3, false)" class="q8-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">D) Endosimbiyoz Hipotezi</button>
+                        </div>
+                    </div>
+                    <div id="desc-8" class="hidden p-2.5 rounded bg-slate-900 border border-slate-800 text-xs text-slate-300">
+                        💡 <strong>Açıklama:</strong> Kemiozmotik Hipotez, proton gradyanı kullanarak ATP sentezini açıklar.
+                    </div>
+                </div>
+
+                <!-- Soru 9 -->
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs flex flex-col justify-between space-y-3">
+                    <div>
+                        <p class="font-bold text-slate-100 text-sm mb-3">9. Bitkilerde fotosentez sırasında NADPH molekülünün görevi nedir?</p>
+                        <div class="space-y-2">
+                            <button onclick="checkAnswer(9, 0, false)" class="q9-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">A) Işığı absorbe etmek</button>
+                            <button onclick="checkAnswer(9, 1, true)" class="q9-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">B) Elektron ve proton (H⁺) taşımak</button>
+                            <button onclick="checkAnswer(9, 2, false)" class="q9-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">C) Su parçalamak</button>
+                            <button onclick="checkAnswer(9, 3, false)" class="q9-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">D) Hücre zarını korumak</button>
+                        </div>
+                    </div>
+                    <div id="desc-9" class="hidden p-2.5 rounded bg-slate-900 border border-slate-800 text-xs text-slate-300">
+                        💡 <strong>Açıklama:</strong> NADP⁺ molekülü ışık evresinde elektron ve H⁺ alarak NADPH'ye dönüşür ve bunları Calvin döngüsüne taşır.
+                    </div>
+                </div>
+
+                <!-- Soru 10 -->
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs flex flex-col justify-between space-y-3">
+                    <div>
+                        <p class="font-bold text-slate-100 text-sm mb-3">10. Aşağıdakilerden hangisi fotosentez hızını doğrudan etkileyen çevresel faktörlerden biri değildir?</p>
+                        <div class="space-y-2">
+                            <button onclick="checkAnswer(10, 0, false)" class="q10-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">A) Işık Şiddeti</button>
+                            <button onclick="checkAnswer(10, 1, false)" class="q10-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">B) Karbondioksit Yoğunluğu</button>
+                            <button onclick="checkAnswer(10, 2, false)" class="q10-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">C) Sıcaklık</button>
+                            <button onclick="checkAnswer(10, 3, true)" class="q10-btn w-full text-left p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all font-medium">D) Kloroplast Sayısı</button>
+                        </div>
+                    </div>
+                    <div id="desc-10" class="hidden p-2.5 rounded bg-slate-900 border border-slate-800 text-xs text-slate-300">
+                        💡 <strong>Açıklama:</strong> Kloroplast sayısı genetik/içsel bir faktördür. Işık, CO₂ ve sıcaklık ise çevresel faktörlerdir.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Alt Bilgi / GÜNCELLENEN Proje Ekibi Paneli (Footer) -->
+    <footer class="bg-slate-900 border-t border-slate-800/80 py-8 mt-8">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center sm:text-left mb-4">
+                <h3 class="text-sm font-bold text-emerald-400 uppercase tracking-wider">Proje Ekibi ve Katkıda Bulunanlar</h3>
+                <p class="text-xs text-slate-400">Fotosentez simülasyonu projesinde görev alan ekip üyeleri</p>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 shadow-lg flex flex-col justify-center">
+                    <span class="text-sm font-bold text-slate-100">Burak Rüzgar</span>
+                    <span class="text-xs text-amber-400 mt-1">Animasyonu yaptı.</span>
+                </div>
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 shadow-lg flex flex-col justify-center">
+                    <span class="text-sm font-bold text-slate-100">Rüzgar</span>
+                    <span class="text-xs text-emerald-400 mt-1">Siteyi yaptı.</span>
+                </div>
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 shadow-lg flex flex-col justify-center">
+                    <span class="text-sm font-bold text-slate-100">Yağız</span>
+                    <span class="text-xs text-blue-400 mt-1">Gerekli yazıları araştırdı ve grafikleri oluşturdu.</span>
+                </div>
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 shadow-lg flex flex-col justify-center">
+                    <span class="text-sm font-bold text-slate-100">Çağan</span>
+                    <span class="text-xs text-cyan-400 mt-1">Sundu.</span>
+                </div>
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 shadow-lg flex flex-col justify-center">
+                    <span class="text-sm font-bold text-slate-100">Eren</span>
+                    <span class="text-xs text-purple-400 mt-1">5 tane soru yazdı.</span>
+                </div>
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 shadow-lg flex flex-col justify-center">
+                    <span class="text-sm font-bold text-slate-100">Mehmet</span>
+                    <span class="text-xs text-purple-400 mt-1">5 tane soru yazdı.</span>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-800/80 text-center text-xs text-slate-500">
+                Biyoloji Eğitim Modeli - Fotosentez Aşamaları ve Biyokimyasal Reaksiyon Simülasyonu
+            </div>
+        </div>
+    </footer>
+
+    <!-- JS Animasyon ve Test Fonksiyonları -->
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let isRunning = true;
+        let currentMode = 'all';
+
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor(x, y, targetX, targetY, color, radius, speed, label, type) {
+                this.x = x;
+                this.y = y;
+                this.startX = x;
+                this.startY = y;
+                this.targetX = targetX;
+                this.targetY = targetY;
+                this.color = color;
+                this.radius = radius;
+                this.speed = speed;
+                this.label = label;
+                this.type = type;
+                this.progress = Math.random();
+            }
+
+            update() {
+                this.progress += this.speed;
+                if (this.progress > 1) this.progress = 0;
+
+                if (this.type === 'light') {
+                    this.x = this.startX + (this.targetX - this.startX) * this.progress;
+                    this.y = this.startY + (this.targetY - this.startY) * this.progress + Math.sin(this.progress * Math.PI * 4) * 10;
+                } else if (this.type === 'cycle') {
+                    const angle = this.progress * Math.PI * 2;
+                    this.x = this.targetX + Math.cos(angle) * 55;
+                    this.y = this.targetY + Math.sin(angle) * 55;
+                } else {
+                    this.x = this.startX + (this.targetX - this.startX) * this.progress;
+                    this.y = this.startY + (this.targetY - this.startY) * this.progress;
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+
+                if (this.label) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '10px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(this.label, this.x, this.y - this.radius - 3);
+                }
+            }
+        }
+
+        let particles = [];
+
+        function initParticles() {
+            particles = [];
+            const w = canvas.width;
+            const h = canvas.height;
+
+            for (let i = 0; i < 6; i++) {
+                particles.push(new Particle(w * 0.15, h * 0.15, w * 0.35, h * 0.45, '#facc15', 3, 0.005 + i * 0.002, '', 'light'));
+            }
+
+            for (let i = 0; i < 4; i++) {
+                particles.push(new Particle(w * 0.05, h * 0.8, w * 0.3, h * 0.55, '#38bdf8', 4, 0.004 + i * 0.001, 'H₂O', 'linear'));
+                particles.push(new Particle(w * 0.35, h * 0.45, w * 0.1, h * 0.2, '#60a5fa', 4, 0.004 + i * 0.001, 'O₂', 'linear'));
+            }
+
+            for (let i = 0; i < 4; i++) {
+                particles.push(new Particle(w * 0.9, h * 0.2, w * 0.7, h * 0.45, '#cbd5e1', 4, 0.003 + i * 0.001, 'CO₂', 'linear'));
+                particles.push(new Particle(w * 0.7, h * 0.55, w * 0.9, h * 0.8, '#34d399', 5, 0.003 + i * 0.001, 'Glikoz', 'linear'));
+            }
+
+            for (let i = 0; i < 3; i++) {
+                particles.push(new Particle(w * 0.42, h * 0.45, w * 0.58, h * 0.45, '#f59e0b', 3, 0.006 + i * 0.002, 'ATP', 'linear'));
+                particles.push(new Particle(w * 0.42, h * 0.55, w * 0.58, h * 0.55, '#a855f7', 3, 0.006 + i * 0.002, 'NADPH', 'linear'));
+            }
+
+            for (let i = 0; i < 5; i++) {
+                const p = new Particle(0, 0, w * 0.7, h * 0.5, '#10b981', 3.5, 0.005, '', 'cycle');
+                p.progress = i / 5;
+                particles.push(p);
+            }
+        }
+
+        function drawChloroplast() {
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.beginPath();
+            ctx.ellipse(w * 0.5, h * 0.52, w * 0.42, h * 0.38, 0, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(6, 78, 59, 0.4)';
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 3;
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#6ee7b7';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('KLOROPLAST', w * 0.12, h * 0.22);
+
+            ctx.beginPath();
+            ctx.ellipse(w * 0.32, h * 0.5, w * 0.14, h * 0.22, 0, 0, Math.PI * 2);
+            ctx.fillStyle = currentMode === 'dark' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.25)';
+            ctx.strokeStyle = currentMode === 'dark' ? '#047857' : '#34d399';
+            ctx.lineWidth = 2;
+            ctx.fill();
+            ctx.stroke();
+
+            for (let i = -1; i <= 1; i++) {
+                ctx.fillStyle = '#059669';
+                ctx.beginPath();
+                ctx.roundRect(w * 0.27, h * 0.48 + i * 22, w * 0.1, 14, 4);
+                ctx.fill();
+            }
+
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = 'bold 13px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Tilakoit Zar', w * 0.32, h * 0.34);
+
+            ctx.beginPath();
+            ctx.arc(w * 0.7, h * 0.5, w * 0.12, 0, Math.PI * 2);
+            ctx.fillStyle = currentMode === 'light' ? 'rgba(6, 182, 212, 0.08)' : 'rgba(6, 182, 212, 0.2)';
+            ctx.strokeStyle = currentMode === 'light' ? '#0e7490' : '#22d3ee';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fill();
+
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = 'bold 13px sans-serif';
+            ctx.fillText('Calvin Döngüsü', w * 0.7, h * 0.34);
+
+            ctx.beginPath();
+            ctx.arc(w * 0.12, h * 0.12, 24, 0, Math.PI * 2);
+            ctx.fillStyle = '#facc15';
+            ctx.fill();
+
+            ctx.fillStyle = '#fef08a';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.fillText('GÜNEŞ', w * 0.12, h * 0.12 + 3);
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawChloroplast();
+
+            particles.forEach(p => {
+                if (isRunning) p.update();
+
+                if (currentMode === 'light') {
+                    if (p.label === 'CO₂' || p.label === 'Glikoz' || p.type === 'cycle') return;
+                } else if (currentMode === 'dark') {
+                    if (p.type === 'light' || p.label === 'H₂O' || p.label === 'O₂') return;
+                }
+
+                p.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('btnAll').className = mode === 'all' ? 'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all bg-emerald-600 text-white shadow-lg' : 'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white';
+            document.getElementById('btnLight').className = mode === 'light' ? 'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all bg-emerald-600 text-white shadow-lg' : 'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white';
+            document.getElementById('btnDark').className = mode === 'dark' ? 'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all bg-emerald-600 text-white shadow-lg' : 'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white';
+        }
+
+        function togglePlay() {
+            isRunning = !isRunning;
+            document.getElementById('iconPause').classList.toggle('hidden', !isRunning);
+            document.getElementById('iconPlay').classList.toggle('hidden', isRunning);
+        }
+
+        // Test Cevap Kontrolü
+        function checkAnswer(questionNum, optionIndex, isCorrect) {
+            const buttons = document.querySelectorAll(`.q${questionNum}-btn`);
+            const descEl = document.getElementById(`desc-${questionNum}`);
+            
+            if (descEl) descEl.classList.remove('hidden');
+
+            buttons.forEach((btn, idx) => {
+                btn.disabled = true;
+                if (idx === optionIndex) {
+                    if (isCorrect) {
+                        btn.className = `q${questionNum}-btn w-full text-left p-2.5 rounded-lg bg-emerald-950 border border-emerald-500 text-emerald-300 font-bold`;
+                    } else {
+                        btn.className = `q${questionNum}-btn w-full text-left p-2.5 rounded-lg bg-rose-950 border border-rose-500 text-rose-300 font-medium`;
+                    }
+                } else {
+                    btn.className = `q${questionNum}-btn w-full text-left p-2.5 rounded-lg bg-slate-900/40 border border-slate-800/40 text-slate-500 opacity-60`;
+                }
+            });
+        }
+
+        // Başlatma
+        initParticles();
+        animate();
+    </script>
+</body>
+</html>
